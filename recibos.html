@@ -785,24 +785,24 @@
                     // 3. Monta o nome no padrão: "Recibo 2026-65 - Nome - CIM 12345 - maio 2026.pdf"
                     const nomeMesesArquivo = mesesSelecionados.map(m => m.text.toLowerCase()).join(', ');
 
-                   // Substitua o seu bloco fetch por este:
-await fetch(API_URL, {
-    method: 'POST',
-    // 1. O Content-Type precisa ser application/json para o Google processar o objeto
-    headers: { 'Content-Type': 'application/json' }, 
-    body: JSON.stringify({
-        acao: 'gerar_recibo_oficial',
-        nome: nomePagador,
-        cim: cimPagador,
-        numero: numeroRecibo,
-        valor: valor,
-        // 2. Garante que os meses sejam enviados no formato que o motor de baixa espera
-        mesesRaw: mesesSelecionados, 
-        mesesText: nomeMesesArquivo,
-        fileBase64: pdfBase64,
-        mimeType: 'application/pdf'
-    })
-});
+                    // ── ENVIA PARA O GOOGLE (PDF + BAIXA NA PLANILHA) ──────────────
+                    // IMPORTANTE: Content-Type deve ser text/plain para passar no CORS
+                    // do Google Apps Script. application/json dispara preflight e é bloqueado.
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({
+                            acao: 'gerar_recibo_oficial',
+                            nome: nomePagador,
+                            cim: cimPagador,
+                            numero: numeroRecibo,
+                            valor: valor,
+                            mesesRaw: mesesSelecionados,
+                            mesesText: nomeMesesArquivo,
+                            fileBase64: pdfBase64,
+                            mimeType: 'application/pdf'
+                        })
+                    });
 
                     // Guarda o base64 para o botão Baixar usar sem recapturar
                     window._ultimoPdfBase64 = pdfBase64;
@@ -811,19 +811,6 @@ await fetch(API_URL, {
                 } catch (ePdf) {
                     console.error('Erro ao gerar/salvar PDF:', ePdf);
                 }
-
-                // ── DAR BAIXA: Marca PAGO na planilha master e limpa Coluna G ────
-                try {
-                    await fetch(API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({
-                            acao: 'dar_baixa_imediata',
-                            cim: cimPagador,
-                            mesesRaw: mesesSelecionados
-                        })
-                    });
-                } catch (e) { console.error('Erro ao dar baixa imediata:', e); }
 
                 const msg = document.getElementById('successMessage');
                 msg.style.display = 'block';
