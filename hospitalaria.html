@@ -119,11 +119,6 @@ tr:last-child td{border-bottom:none;}
 .filtro-btn.ativo{background:#1a3a7a;color:white;border-color:#1a3a7a;}
 .filtro-btn:disabled{opacity: 0.7; cursor: not-allowed;}
 
-/* SALDO BARRA */
-.saldo-bar-wrap{margin-top:14px;}
-.saldo-bar-track{height:10px;background:#f0f0f0;border-radius:10px;overflow:hidden;}
-.saldo-bar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,#2e7d32,#66bb6a);transition:width 1s ease;}
-
 /* ESTILO EXCLUSIVO DE IMPRESSÃO (PDF) */
 @media print {
   header, .year-bar, #loadingState, .filtro-row, #painelRelatorios, .btn-voltar, .btn-sair { display: none !important; }
@@ -410,7 +405,6 @@ async function inicializar() {
 
   await carregarDados(true);
 
-  // Força atualização a cada 45 segundos, ignorando cache do navegador
   setInterval(() => {
     carregarDados(false);
   }, 45000);
@@ -461,10 +455,7 @@ async function carregarDados(primeiraVez = true) {
       document.getElementById('painelRelatorios').style.display = 'none';
     }
 
-    // O "_t" quebra o cache do navegador forçando a baixar sempre a nova versão da planilha
     const urlBusca = API_HOSPITALARIA + '?acao=hospitalaria&_t=' + new Date().getTime();
-    
-    // Adicionado "cache: 'no-store'" para bloqueio de cache duplo (navegador + servidor)
     const resp = await fetch(urlBusca, { cache: 'no-store' });
     const json = await resp.json();
 
@@ -730,12 +721,10 @@ function renderEstatisticas() {
   const entradas = lancamentosAno.filter(l => l.tipo === 'Entrada');
   const saidas   = lancamentosAno.filter(l => l.tipo === 'Saída');
   const totEnt   = entradas.reduce((s,l) => s + l.valor, 0);
-  const totSai   = saidas.reduce((s,l) => s + l.valor, 0);
 
   const maxEnt = entradas.length ? Math.max(...entradas.map(l=>l.valor)) : 0;
   const minEnt = entradas.length ? Math.min(...entradas.map(l=>l.valor)) : 0;
   const mediaEnt = entradas.length ? totEnt / entradas.length : 0;
-  const pctSaldo = totEnt > 0 ? Math.min(100, ((totEnt - totSai) / totEnt) * 100) : 0;
 
   document.getElementById('estatisticas').innerHTML = `
     <div class="media-item verde">
@@ -747,14 +736,6 @@ function renderEstatisticas() {
       <div class="media-label">Maior entrada registrada</div>
       <div class="media-val">${fmt(maxEnt)}</div>
       <div class="media-sub">Menor: ${fmt(minEnt)}</div>
-    </div>
-    <div class="media-item">
-      <div class="media-label">Saúde financeira (saldo/entradas)</div>
-      <div class="media-val" style="font-size:18px;color:#1a3a7a;">${pctSaldo.toFixed(1)}%</div>
-      <div class="saldo-bar-wrap">
-        <div class="saldo-bar-track"><div class="saldo-bar-fill" style="width:${pctSaldo}%"></div></div>
-      </div>
-      <div class="media-sub" style="margin-top:4px;">do total arrecadado permanece em caixa</div>
     </div>
   `;
 }
@@ -815,7 +796,6 @@ function executarExportacaoCSV() {
   document.body.removeChild(link);
 }
 
-// NOVO: Disparo silencioso de E-mail usando o Backend do Google
 async function executarExportacaoEmailSilencioso() {
   const dataset = anoSelecionado === 'Geral' ? dadosCompletos : lancamentosAno;
   if(!dataset.length) { alert('Não há registros para exportar no período selecionado.'); return; }
