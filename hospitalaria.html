@@ -370,6 +370,7 @@ let graficoLinha = null;
 let graficoAnosBarra = null;
 let graficoHistoricoLinha = null;
 let lancamentosAno = [];
+let emailUsuarioLogado = '';
 
 const app  = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
@@ -381,8 +382,11 @@ onAuthStateChanged(auth, (user) => {
     window.location.replace('portal.html');
     return;
   }
+  
+  emailUsuarioLogado = user.email; // Salva o e-mail para usar depois no relatório
   document.getElementById('userEmail').textContent = user.email.split('@')[0];
   document.getElementById('btnSair').onclick = () => signOut(auth).then(() => window.location.replace('index.html'));
+  
   inicializar();
 });
 
@@ -435,7 +439,7 @@ function selecionarAno(ano, btn) {
   document.querySelectorAll('.year-tab').forEach(t => t.classList.remove('ativo'));
   btn.classList.add('ativo');
   
-  document.getElementById('labelFiltroRelatorio').textContent = `Escopo selecionado: Relatório Conduzido - Filtro [${ano}]`;
+  document.getElementById('labelFiltroRelatorio').textContent = `Documento focado no escopo ativo: Filtro [${ano}]`;
 
   if (ano === 'Geral') {
     document.getElementById('conteudoAno').style.display = 'none';
@@ -457,7 +461,11 @@ async function carregarDados(primeiraVez = true) {
       document.getElementById('painelRelatorios').style.display = 'none';
     }
 
-    const resp = await fetch(API_HOSPITALARIA + '?acao=hospitalaria');
+    // Criamos um parâmetro de tempo aleatório para forçar o navegador a não usar cache
+    const carimboDeTempo = new Date().getTime();
+    const urlBusca = API_HOSPITALARIA + '?acao=hospitalaria&_t=' + carimboDeTempo;
+    
+    const resp = await fetch(urlBusca);
     const json = await resp.json();
 
     if (json.erro) throw new Error(json.erro);
@@ -827,7 +835,8 @@ function executarExportacaoEmail() {
     `Para consultar o extrato detalhado de cada transação, por favor acesse o Portal Web da Loja.`
   );
 
-  window.location.href = `mailto:?subject=${assunto}&body=${corpo}`;
+  // Aqui preenchemos o e-mail do usuário autenticado no campo "Para"
+  window.location.href = `mailto:${emailUsuarioLogado}?subject=${assunto}&body=${corpo}`;
 }
 
 function fmt(v) {
