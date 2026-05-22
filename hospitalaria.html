@@ -319,7 +319,6 @@ tr:last-child td{border-bottom:none;}
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
-// CONFIGURAÇÃO
 const FIREBASE_CONFIG = {
   apiKey:"AIzaSyAG2f75cmIH7p4tA4AwFoWgQg0DTYRoxW8",
   authDomain:"monte-sinai-recibos.firebaseapp.com",
@@ -331,17 +330,14 @@ const FIREBASE_CONFIG = {
 
 const API_HOSPITALARIA = 'https://script.google.com/macros/s/AKfycbzyGI6jHnSjte1J0SinwULVUaKp59Pyy9zczBHy0uTbBQmiKyS8ZJHpNlQXvjRoew6eNw/exec';
 
-// CONTROLE DE ACESSO
 const EMAILS_AUTORIZADOS = [
-  'baronccini89@gmail.com',        // Tesoureiro
-  'sergioedsonh@yahoo.com.br',     // Venerável Mestre
-  // 'hospitaleiro@email.com',     // Hospitaleiro (Remova as barras quando tiver o e-mail)
+  'baronccini89@gmail.com',
+  'sergioedsonh@yahoo.com.br',
 ];
 
 const ANOS_DISPONIVEIS = [2025, 2026, 2027];
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
-// ESTADO GLOBAL
 let dadosCompletos = [];
 let dadosPorAno = {};
 let anoSelecionado = 'Geral';
@@ -351,7 +347,6 @@ let graficoAnosBarra = null;
 let graficoHistoricoLinha = null;
 let lancamentosAno = [];
 
-// FIREBASE AUTH
 const app  = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 
@@ -367,7 +362,6 @@ onAuthStateChanged(auth, (user) => {
   inicializar();
 });
 
-// INIT
 async function inicializar() {
   criarTabs();
   await carregarDados();
@@ -376,14 +370,12 @@ async function inicializar() {
 function criarTabs() {
   const bar = document.getElementById('yearBar');
   
-  // Tab Geral
   const btnGeral = document.createElement('button');
   btnGeral.className = 'year-tab tab-destaque ativo';
   btnGeral.textContent = '🏛️ Visão Geral';
   btnGeral.onclick = () => selecionarAno('Geral', btnGeral);
   bar.appendChild(btnGeral);
 
-  // Tabs Anos
   ANOS_DISPONIVEIS.forEach(ano => {
     const btn = document.createElement('button');
     btn.className = 'year-tab';
@@ -409,7 +401,6 @@ function selecionarAno(ano, btn) {
   }
 }
 
-// CARREGAR DADOS
 async function carregarDados() {
   try {
     const resp = await fetch(API_HOSPITALARIA + '?acao=hospitalaria');
@@ -418,12 +409,12 @@ async function carregarDados() {
     if (json.erro) throw new Error(json.erro);
 
     dadosCompletos = (json.lancamentos || []).filter(l => l.tipo && l.valor > 0);
-    dadosCompletos.sort((a,b) => new Date(a.data) - new Date(b.data));
+    dadosCompletos.sort((a,b) => a.data.localeCompare(b.data));
 
-    // Agrupa por ano
     dadosPorAno = {};
     dadosCompletos.forEach(l => {
-      const ano = new Date(l.data).getFullYear();
+      const partes = l.data.split('-');
+      const ano = parseInt(partes[0]);
       if (!dadosPorAno[ano]) dadosPorAno[ano] = [];
       dadosPorAno[ano].push(l);
     });
@@ -437,7 +428,6 @@ async function carregarDados() {
   }
 }
 
-// RENDERIZAR GERAL
 function renderizarGeral() {
   const entradas = dadosCompletos.filter(l => l.tipo === 'Entrada');
   const saidas   = dadosCompletos.filter(l => l.tipo === 'Saída');
@@ -446,7 +436,6 @@ function renderizarGeral() {
   const saldo    = totEnt - totSai;
   const mediaEnt = entradas.length > 0 ? totEnt / entradas.length : 0;
 
-  // KPIs
   document.getElementById('geralEntradas').textContent = fmt(totEnt);
   document.getElementById('geralEntradasQtd').textContent = entradas.length + ' doações registradas';
   document.getElementById('geralSaidas').textContent = fmt(totSai);
@@ -459,7 +448,6 @@ function renderizarGeral() {
   document.getElementById('geralMedia').textContent = fmt(mediaEnt);
   document.getElementById('geralMediaSub').textContent = 'em ' + entradas.length + ' encontros';
 
-  // Gráfico Comparativo Anos
   const labelsAnos = ANOS_DISPONIVEIS.map(String);
   const dadosEntAnos = ANOS_DISPONIVEIS.map(ano => {
     return (dadosPorAno[ano] || []).filter(l=>l.tipo==='Entrada').reduce((s,l)=>s+l.valor,0);
@@ -488,15 +476,14 @@ function renderizarGeral() {
     }
   });
 
-  // Gráfico Evolução Histórica
   let acumuladoTotal = 0;
   const pontosHist = [];
   const labelsHist = [];
 
   dadosCompletos.forEach(l => {
     acumuladoTotal += l.tipo === 'Entrada' ? l.valor : -l.valor;
-    const d = new Date(l.data);
-    labelsHist.push(d.getDate() + '/' + (d.getMonth()+1) + '/' + String(d.getFullYear()).slice(-2));
+    const partes = l.data.split('-');
+    labelsHist.push(partes[2] + '/' + partes[1] + '/' + partes[0].slice(-2));
     pontosHist.push(parseFloat(acumuladoTotal.toFixed(2)));
   });
 
@@ -523,7 +510,6 @@ function renderizarGeral() {
     }
   });
 
-  // Top Listas Gerais
   gerarListaTop(entradas, 'geralTopEntradas', 'Entrada');
   gerarListaTop(saidas, 'geralTopSaidas', 'Saída');
 }
@@ -542,8 +528,8 @@ function gerarListaTop(lista, elementoId, tipo) {
   const corClass = tipo === 'Entrada' ? 'pos' : '';
 
   el.innerHTML = top.map((s,i) => {
-    const d = new Date(s.data);
-    const dataFmt = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0') + '/' + d.getFullYear();
+    const partes = s.data.split('-');
+    const dataFmt = partes[2] + '/' + partes[1] + '/' + partes[0];
     const descricao = s.descricao || 'Registro via Bot';
     return `<div class="top-item">
       <div class="top-rank ${ranks[i]||''}">${i+1}</div>
@@ -556,8 +542,6 @@ function gerarListaTop(lista, elementoId, tipo) {
   }).join('');
 }
 
-
-// RENDERIZAR ANO ESPECÍFICO
 function renderizarAno() {
   lancamentosAno = dadosPorAno[anoSelecionado] || [];
   document.getElementById('anoGraficoLabel').textContent = anoSelecionado;
@@ -596,7 +580,8 @@ function renderGraficoBarra() {
   const saiMes = Array(12).fill(0);
 
   lancamentosAno.forEach(l => {
-    const m = new Date(l.data).getMonth();
+    const partes = l.data.split('-');
+    const m = parseInt(partes[1]) - 1;
     if (l.tipo === 'Entrada') entMes[m] += l.valor;
     else saiMes[m] += l.valor;
   });
@@ -629,8 +614,8 @@ function renderGraficoLinha() {
 
   lancamentosAno.forEach(l => {
     acumulado += l.tipo === 'Entrada' ? l.valor : -l.valor;
-    const d = new Date(l.data);
-    labels.push(d.getDate() + '/' + (d.getMonth()+1));
+    const partes = l.data.split('-');
+    labels.push(partes[2] + '/' + partes[1]);
     pontos.push(parseFloat(acumulado.toFixed(2)));
   });
 
@@ -709,9 +694,8 @@ function renderTabela(filtro) {
   vazio.style.display = 'none';
 
   corpo.innerHTML = [...lista].reverse().map(l => {
-    const d = new Date(l.data);
-    const dataFmt = d.getDate().toString().padStart(2,'0')+'/'+
-                    (d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getFullYear();
+    const partes = l.data.split('-');
+    const dataFmt = partes[2] + '/' + partes[1] + '/' + partes[0];
     const isEnt = l.tipo === 'Entrada';
     const descricao = l.descricao || 'Sem descrição';
     
