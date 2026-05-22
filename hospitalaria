@@ -271,7 +271,7 @@ const FIREBASE_CONFIG = {
 
 // URL do Apps Script de leitura da planilha Hospitalaria
 // ⚠️ SUBSTITUA pela URL do api_hospitalaria.gs depois de publicar
-const API_HOSPITALARIA = 'COLE_AQUI_A_URL_DO_api_hospitalaria.gs';
+const API_HOSPITALARIA = 'https://script.google.com/macros/s/AKfycbzyGI6jHnSjte1J0SinwULVUaKp59Pyy9zczBHy0uTbBQmiKyS8ZJHpNlQXvjRoew6eNw/exec';
 
 // Emails autorizados a ver esta página
 const EMAILS_AUTORIZADOS = [
