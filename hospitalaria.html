@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hospitalária · Monte Sinai Nº 371</title>
+<title>Hospitalária - Monte Sinai Nº 371</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -28,6 +28,7 @@ header{background:linear-gradient(135deg,#0f2a5a 0%,#1a3a7a 100%);color:white;pa
 .year-tab{padding:14px 26px;font-size:14px;font-weight:600;color:#888;cursor:pointer;border:none;border-bottom:3px solid transparent;background:none;transition:.25s;font-family:inherit;white-space:nowrap;}
 .year-tab:hover{color:#1a3a7a;background:#f8f9ff;}
 .year-tab.ativo{color:#1a3a7a;border-bottom-color:#d4af37;background:#f8f9ff;}
+.tab-destaque{color:#b8860b;font-weight:700;}
 
 /* MAIN */
 .container{padding:24px;max-width:1300px;margin:0 auto;}
@@ -90,6 +91,7 @@ tr:last-child td{border-bottom:none;}
 .top-desc{font-size:13px;font-weight:600;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
 .top-data{font-size:11px;color:#aaa;}
 .top-valor{font-size:15px;font-weight:800;color:#c62828;white-space:nowrap;}
+.top-valor.pos{color:#2e7d32;}
 
 /* MEDIA CARD */
 .media-wrap{display:flex;flex-direction:column;gap:14px;}
@@ -115,45 +117,109 @@ tr:last-child td{border-bottom:none;}
 
 /* SALDO BARRA */
 .saldo-bar-wrap{margin-top:14px;}
-.saldo-bar-label{display:flex;justify-content:space-between;font-size:12px;color:#888;margin-bottom:6px;}
 .saldo-bar-track{height:10px;background:#f0f0f0;border-radius:10px;overflow:hidden;}
 .saldo-bar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,#2e7d32,#66bb6a);transition:width 1s ease;}
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header>
   <div class="header-left">
     <img src="./logo.png" alt="Logo" class="logo-img">
     <div class="header-title">
       <h1>🏥 Hospitalária</h1>
-      <p>Monte Sinai Nº 371 · Controle do Tronco</p>
+      <p>Monte Sinai Nº 371 - Controle do Tronco</p>
     </div>
   </div>
   <div class="header-right">
-    <span class="user-badge" id="userEmail">—</span>
+    <span class="user-badge" id="userEmail">Carregando...</span>
     <a href="portal.html" class="btn-voltar">← Voltar</a>
     <button class="btn-sair" id="btnSair">Sair</button>
   </div>
 </header>
 
-<!-- YEAR TABS -->
 <div class="year-bar" id="yearBar"></div>
 
-<!-- MAIN -->
 <div class="container">
 
-  <!-- LOADING -->
   <div id="loadingState" class="loading-state">
     <div class="spinner"></div>
     <p>Carregando dados financeiros...</p>
   </div>
 
-  <!-- CONTEÚDO -->
-  <div id="conteudo" style="display:none;">
+  <div id="conteudoGeral" style="display:none;">
+    <div class="kpi-grid">
+      <div class="kpi verde">
+        <span class="kpi-icon">💰</span>
+        <div class="kpi-label">Total Arrecadado</div>
+        <div class="kpi-valor" id="geralEntradas">R$ 0,00</div>
+        <div class="kpi-sub" id="geralEntradasQtd">Todos os anos</div>
+      </div>
+      <div class="kpi vermelho">
+        <span class="kpi-icon">📤</span>
+        <div class="kpi-label">Total Saídas</div>
+        <div class="kpi-valor" id="geralSaidas">R$ 0,00</div>
+        <div class="kpi-sub" id="geralSaidasQtd">Todos os anos</div>
+      </div>
+      <div class="kpi azul">
+        <span class="kpi-icon">🏦</span>
+        <div class="kpi-label">Saldo Histórico</div>
+        <div class="kpi-valor" id="geralSaldo">R$ 0,00</div>
+        <div class="kpi-sub">Valor total em caixa</div>
+      </div>
+      <div class="kpi ouro">
+        <span class="kpi-icon">📅</span>
+        <div class="kpi-label">Média Geral por Reunião</div>
+        <div class="kpi-valor" id="geralMedia">R$ 0,00</div>
+        <div class="kpi-sub" id="geralMediaSub">média histórica das segundas</div>
+      </div>
+    </div>
 
-    <!-- KPIs -->
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>📊 Comparativo por Ano</h3>
+          <span>Entradas x Saídas</span>
+        </div>
+        <div class="panel-body">
+          <div class="chart-wrap"><canvas id="graficoAnos"></canvas></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <h3>📈 Evolução do Saldo Histórico</h3>
+          <span>Todos os anos</span>
+        </div>
+        <div class="panel-body">
+          <div class="chart-wrap"><canvas id="graficoHistorico"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>⭐ Maiores Doações Registradas</h3>
+          <span>Top 5 Histórico</span>
+        </div>
+        <div class="panel-body">
+          <div id="geralTopEntradas" class="empty-state">Sem registros</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <h3>🔺 Maiores Saídas Registradas</h3>
+          <span>Top 5 Histórico</span>
+        </div>
+        <div class="panel-body">
+          <div id="geralTopSaidas" class="empty-state">Sem registros</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="conteudoAno" style="display:none;">
+
     <div class="kpi-grid">
       <div class="kpi verde">
         <span class="kpi-icon">💰</span>
@@ -171,17 +237,16 @@ tr:last-child td{border-bottom:none;}
         <span class="kpi-icon">🏦</span>
         <div class="kpi-label">Saldo do Ano</div>
         <div class="kpi-valor" id="kpiSaldo">R$ 0,00</div>
-        <div class="kpi-sub">Entradas − Saídas</div>
+        <div class="kpi-sub">Entradas - Saídas</div>
       </div>
       <div class="kpi ouro">
         <span class="kpi-icon">📅</span>
         <div class="kpi-label">Média por Reunião</div>
         <div class="kpi-valor" id="kpiMedia">R$ 0,00</div>
-        <div class="kpi-sub" id="kpiMediaSub">média das segundas-feiras</div>
+        <div class="kpi-sub" id="kpiMediaSub">média das segundas</div>
       </div>
     </div>
 
-    <!-- GRÁFICO + TOP SAÍDAS -->
     <div class="grid-3">
       <div class="panel">
         <div class="panel-header">
@@ -194,7 +259,7 @@ tr:last-child td{border-bottom:none;}
       </div>
       <div class="panel">
         <div class="panel-header">
-          <h3>🔺 Maiores Saídas</h3>
+          <h3>🔺 Maiores Saídas do Ano</h3>
           <span>Top 5</span>
         </div>
         <div class="panel-body">
@@ -203,7 +268,6 @@ tr:last-child td{border-bottom:none;}
       </div>
     </div>
 
-    <!-- GRÁFICO EVOLUÇÃO + ESTATÍSTICAS -->
     <div class="grid-2" style="margin-bottom:20px;">
       <div class="panel">
         <div class="panel-header">
@@ -215,7 +279,7 @@ tr:last-child td{border-bottom:none;}
       </div>
       <div class="panel">
         <div class="panel-header">
-          <h3>📐 Estatísticas</h3>
+          <h3>📐 Estatísticas do Ano</h3>
         </div>
         <div class="panel-body">
           <div class="media-wrap" id="estatisticas"></div>
@@ -223,7 +287,6 @@ tr:last-child td{border-bottom:none;}
       </div>
     </div>
 
-    <!-- TABELA LANÇAMENTOS -->
     <div class="panel">
       <div class="panel-header">
         <h3>📋 Lançamentos do Ano</h3>
@@ -252,14 +315,11 @@ tr:last-child td{border-bottom:none;}
       </div>
     </div>
 
-  </div><!-- /conteudo -->
-</div><!-- /container -->
-
-<script type="module">
+  </div></div><script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 
-// ── CONFIG ──────────────────────────────────────────────────
+// CONFIGURAÇÃO
 const FIREBASE_CONFIG = {
   apiKey:"AIzaSyAG2f75cmIH7p4tA4AwFoWgQg0DTYRoxW8",
   authDomain:"monte-sinai-recibos.firebaseapp.com",
@@ -269,35 +329,36 @@ const FIREBASE_CONFIG = {
   appId:"1:880791367597:web:5cbba591d90e41cd56bb24"
 };
 
-// URL do Apps Script de leitura da planilha Hospitalaria
-// ⚠️ SUBSTITUA pela URL do api_hospitalaria.gs depois de publicar
 const API_HOSPITALARIA = 'https://script.google.com/macros/s/AKfycbzyGI6jHnSjte1J0SinwULVUaKp59Pyy9zczBHy0uTbBQmiKyS8ZJHpNlQXvjRoew6eNw/exec';
 
-// Emails autorizados a ver esta página
+// CONTROLE DE ACESSO
 const EMAILS_AUTORIZADOS = [
   'baronccini89@gmail.com',        // Tesoureiro
   'sergioedsonh@yahoo.com.br',     // Venerável Mestre
-  // 'hospitaleiro@email.com',     // Hospitaleiro — adicione quando tiver o email
+  // 'hospitaleiro@email.com',     // Hospitaleiro (Remova as barras quando tiver o e-mail)
 ];
 
 const ANOS_DISPONIVEIS = [2025, 2026, 2027];
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
-// ── ESTADO ──────────────────────────────────────────────────
+// ESTADO GLOBAL
+let dadosCompletos = [];
 let dadosPorAno = {};
-let anoSelecionado = new Date().getFullYear();
+let anoSelecionado = 'Geral';
 let graficoBarra = null;
 let graficoLinha = null;
+let graficoAnosBarra = null;
+let graficoHistoricoLinha = null;
 let lancamentosAno = [];
 
-// ── FIREBASE AUTH ────────────────────────────────────────────
+// FIREBASE AUTH
 const app  = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 
 onAuthStateChanged(auth, (user) => {
   if (!user) { window.location.replace('index.html'); return; }
   if (!EMAILS_AUTORIZADOS.includes(user.email)) {
-    alert('⛔ Acesso restrito. Esta área é exclusiva da Hospitalária.');
+    alert('Acesso restrito. Esta área é exclusiva da Hospitalária.');
     window.location.replace('portal.html');
     return;
   }
@@ -306,7 +367,7 @@ onAuthStateChanged(auth, (user) => {
   inicializar();
 });
 
-// ── INIT ─────────────────────────────────────────────────────
+// INIT
 async function inicializar() {
   criarTabs();
   await carregarDados();
@@ -314,9 +375,18 @@ async function inicializar() {
 
 function criarTabs() {
   const bar = document.getElementById('yearBar');
+  
+  // Tab Geral
+  const btnGeral = document.createElement('button');
+  btnGeral.className = 'year-tab tab-destaque ativo';
+  btnGeral.textContent = '🏛️ Visão Geral';
+  btnGeral.onclick = () => selecionarAno('Geral', btnGeral);
+  bar.appendChild(btnGeral);
+
+  // Tabs Anos
   ANOS_DISPONIVEIS.forEach(ano => {
     const btn = document.createElement('button');
-    btn.className = 'year-tab' + (ano === anoSelecionado ? ' ativo' : '');
+    btn.className = 'year-tab';
     btn.textContent = ano;
     btn.onclick = () => selecionarAno(ano, btn);
     bar.appendChild(btn);
@@ -327,10 +397,19 @@ function selecionarAno(ano, btn) {
   anoSelecionado = ano;
   document.querySelectorAll('.year-tab').forEach(t => t.classList.remove('ativo'));
   btn.classList.add('ativo');
-  renderizarAno();
+  
+  if (ano === 'Geral') {
+    document.getElementById('conteudoAno').style.display = 'none';
+    document.getElementById('conteudoGeral').style.display = 'block';
+    renderizarGeral();
+  } else {
+    document.getElementById('conteudoGeral').style.display = 'none';
+    document.getElementById('conteudoAno').style.display = 'block';
+    renderizarAno();
+  }
 }
 
-// ── CARREGAR DADOS ───────────────────────────────────────────
+// CARREGAR DADOS
 async function carregarDados() {
   try {
     const resp = await fetch(API_HOSPITALARIA + '?acao=hospitalaria');
@@ -338,29 +417,149 @@ async function carregarDados() {
 
     if (json.erro) throw new Error(json.erro);
 
+    dadosCompletos = (json.lancamentos || []).filter(l => l.tipo && l.valor > 0);
+    dadosCompletos.sort((a,b) => new Date(a.data) - new Date(b.data));
+
     // Agrupa por ano
     dadosPorAno = {};
-    (json.lancamentos || []).forEach(l => {
+    dadosCompletos.forEach(l => {
       const ano = new Date(l.data).getFullYear();
       if (!dadosPorAno[ano]) dadosPorAno[ano] = [];
       dadosPorAno[ano].push(l);
     });
 
     document.getElementById('loadingState').style.display = 'none';
-    document.getElementById('conteudo').style.display = 'block';
-    renderizarAno();
+    document.getElementById('conteudoGeral').style.display = 'block';
+    renderizarGeral();
   } catch(e) {
     document.getElementById('loadingState').innerHTML =
-      '<p style="color:#c62828;font-size:14px;">❌ Erro ao carregar dados:<br>' + e.message +
-      '<br><br><small>Verifique se a URL da API está configurada corretamente em hospitalaria.html</small></p>';
+      '<p style="color:#c62828;font-size:14px;">Erro ao carregar dados:<br>' + e.message + '</p>';
   }
 }
 
-// ── RENDERIZAR ANO ───────────────────────────────────────────
-function renderizarAno() {
-  lancamentosAno = (dadosPorAno[anoSelecionado] || []).filter(l => l.tipo && l.valor > 0);
-  lancamentosAno.sort((a,b) => new Date(a.data) - new Date(b.data));
+// RENDERIZAR GERAL
+function renderizarGeral() {
+  const entradas = dadosCompletos.filter(l => l.tipo === 'Entrada');
+  const saidas   = dadosCompletos.filter(l => l.tipo === 'Saída');
+  const totEnt   = entradas.reduce((s,l) => s + l.valor, 0);
+  const totSai   = saidas.reduce((s,l) => s + l.valor, 0);
+  const saldo    = totEnt - totSai;
+  const mediaEnt = entradas.length > 0 ? totEnt / entradas.length : 0;
 
+  // KPIs
+  document.getElementById('geralEntradas').textContent = fmt(totEnt);
+  document.getElementById('geralEntradasQtd').textContent = entradas.length + ' doações registradas';
+  document.getElementById('geralSaidas').textContent = fmt(totSai);
+  document.getElementById('geralSaidasQtd').textContent = saidas.length + ' saídas registradas';
+  
+  const kpiSaldo = document.getElementById('geralSaldo');
+  kpiSaldo.textContent = fmt(saldo);
+  kpiSaldo.closest('.kpi').className = 'kpi ' + (saldo >= 0 ? 'azul' : 'vermelho');
+  
+  document.getElementById('geralMedia').textContent = fmt(mediaEnt);
+  document.getElementById('geralMediaSub').textContent = 'em ' + entradas.length + ' encontros';
+
+  // Gráfico Comparativo Anos
+  const labelsAnos = ANOS_DISPONIVEIS.map(String);
+  const dadosEntAnos = ANOS_DISPONIVEIS.map(ano => {
+    return (dadosPorAno[ano] || []).filter(l=>l.tipo==='Entrada').reduce((s,l)=>s+l.valor,0);
+  });
+  const dadosSaiAnos = ANOS_DISPONIVEIS.map(ano => {
+    return (dadosPorAno[ano] || []).filter(l=>l.tipo==='Saída').reduce((s,l)=>s+l.valor,0);
+  });
+
+  if (graficoAnosBarra) graficoAnosBarra.destroy();
+  graficoAnosBarra = new Chart(document.getElementById('graficoAnos'), {
+    type: 'bar',
+    data: {
+      labels: labelsAnos,
+      datasets: [
+        { label:'Entradas', data:dadosEntAnos, backgroundColor:'rgba(46,125,50,.75)', borderRadius:6 },
+        { label:'Saídas',   data:dadosSaiAnos, backgroundColor:'rgba(198,40,40,.65)', borderRadius:6 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'top', labels:{ font:{family:'Poppins',size:11}, boxWidth:12 } } },
+      scales:{
+        x:{ grid:{display:false}, ticks:{font:{family:'Poppins',size:11}} },
+        y:{ grid:{color:'#f0f0f0'}, ticks:{ font:{family:'Poppins',size:11}, callback: v => 'R$'+v.toLocaleString('pt-BR') } }
+      }
+    }
+  });
+
+  // Gráfico Evolução Histórica
+  let acumuladoTotal = 0;
+  const pontosHist = [];
+  const labelsHist = [];
+
+  dadosCompletos.forEach(l => {
+    acumuladoTotal += l.tipo === 'Entrada' ? l.valor : -l.valor;
+    const d = new Date(l.data);
+    labelsHist.push(d.getDate() + '/' + (d.getMonth()+1) + '/' + String(d.getFullYear()).slice(-2));
+    pontosHist.push(parseFloat(acumuladoTotal.toFixed(2)));
+  });
+
+  if (graficoHistoricoLinha) graficoHistoricoLinha.destroy();
+  graficoHistoricoLinha = new Chart(document.getElementById('graficoHistorico'), {
+    type: 'line',
+    data: {
+      labels: labelsHist,
+      datasets:[{
+        label:'Saldo Acumulado',
+        data: pontosHist,
+        borderColor:'#d4af37',
+        backgroundColor:'rgba(212,175,55,.1)',
+        fill:true, tension:.4, pointRadius:2, pointBackgroundColor:'#1a3a7a'
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ grid:{display:false}, ticks:{font:{family:'Poppins',size:10}, maxTicksLimit:10} },
+        y:{ grid:{color:'#f0f0f0'}, ticks:{ font:{family:'Poppins',size:10}, callback: v => 'R$'+v.toLocaleString('pt-BR') } }
+      }
+    }
+  });
+
+  // Top Listas Gerais
+  gerarListaTop(entradas, 'geralTopEntradas', 'Entrada');
+  gerarListaTop(saidas, 'geralTopSaidas', 'Saída');
+}
+
+function gerarListaTop(lista, elementoId, tipo) {
+  const top = lista.slice().sort((a,b) => b.valor - a.valor).slice(0,5);
+  const el = document.getElementById(elementoId);
+  
+  if (!top.length) { 
+    el.innerHTML = '<div class="empty-state">Nenhum registro encontrado.</div>'; 
+    return; 
+  }
+
+  const ranks = ['ouro','prata','bronze'];
+  const sinal = tipo === 'Entrada' ? '+' : '-';
+  const corClass = tipo === 'Entrada' ? 'pos' : '';
+
+  el.innerHTML = top.map((s,i) => {
+    const d = new Date(s.data);
+    const dataFmt = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0') + '/' + d.getFullYear();
+    const descricao = s.descricao || 'Registro via Bot';
+    return `<div class="top-item">
+      <div class="top-rank ${ranks[i]||''}">${i+1}</div>
+      <div class="top-info">
+        <div class="top-desc" title="${descricao}">${descricao}</div>
+        <div class="top-data">${dataFmt}</div>
+      </div>
+      <div class="top-valor ${corClass}">${sinal} ${fmt(s.valor)}</div>
+    </div>`;
+  }).join('');
+}
+
+
+// RENDERIZAR ANO ESPECÍFICO
+function renderizarAno() {
+  lancamentosAno = dadosPorAno[anoSelecionado] || [];
   document.getElementById('anoGraficoLabel').textContent = anoSelecionado;
 
   renderKPIs();
@@ -371,7 +570,6 @@ function renderizarAno() {
   renderTabela('todos');
 }
 
-// ── KPIs ─────────────────────────────────────────────────────
 function renderKPIs() {
   const entradas = lancamentosAno.filter(l => l.tipo === 'Entrada');
   const saidas   = lancamentosAno.filter(l => l.tipo === 'Saída');
@@ -393,7 +591,6 @@ function renderKPIs() {
   document.getElementById('kpiMediaSub').textContent = 'em ' + entradas.length + ' reuniões';
 }
 
-// ── GRÁFICO BARRAS ───────────────────────────────────────────
 function renderGraficoBarra() {
   const entMes = Array(12).fill(0);
   const saiMes = Array(12).fill(0);
@@ -410,8 +607,8 @@ function renderGraficoBarra() {
     data: {
       labels: MESES,
       datasets: [
-        { label:'Entradas', data:entMes, backgroundColor:'rgba(46,125,50,.75)', borderRadius:6, borderSkipped:false },
-        { label:'Saídas',   data:saiMes, backgroundColor:'rgba(198,40,40,.65)', borderRadius:6, borderSkipped:false }
+        { label:'Entradas', data:entMes, backgroundColor:'rgba(46,125,50,.75)', borderRadius:6 },
+        { label:'Saídas',   data:saiMes, backgroundColor:'rgba(198,40,40,.65)', borderRadius:6 }
       ]
     },
     options: {
@@ -425,7 +622,6 @@ function renderGraficoBarra() {
   });
 }
 
-// ── GRÁFICO SALDO ACUMULADO ──────────────────────────────────
 function renderGraficoLinha() {
   let acumulado = 0;
   const pontos = [];
@@ -448,10 +644,7 @@ function renderGraficoLinha() {
         data: pontos,
         borderColor:'#1a3a7a',
         backgroundColor:'rgba(26,58,122,.08)',
-        fill:true,
-        tension:.4,
-        pointRadius:3,
-        pointBackgroundColor:'#d4af37'
+        fill:true, tension:.4, pointRadius:3, pointBackgroundColor:'#d4af37'
       }]
     },
     options:{
@@ -465,30 +658,11 @@ function renderGraficoLinha() {
   });
 }
 
-// ── TOP SAÍDAS ───────────────────────────────────────────────
 function renderTopSaidas() {
-  const saidas = lancamentosAno.filter(l => l.tipo === 'Saída')
-    .sort((a,b) => b.valor - a.valor).slice(0,5);
-
-  const el = document.getElementById('topSaidas');
-  if (!saidas.length) { el.innerHTML = '<div class="empty-state">Sem saídas registradas neste ano.</div>'; return; }
-
-  const ranks = ['ouro','prata','bronze'];
-  el.innerHTML = saidas.map((s,i) => {
-    const d = new Date(s.data);
-    const dataFmt = d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0') + '/' + d.getFullYear();
-    return `<div class="top-item">
-      <div class="top-rank ${ranks[i]||''}">${i+1}</div>
-      <div class="top-info">
-        <div class="top-desc" title="${s.descricao||'—'}">${s.descricao||'—'}</div>
-        <div class="top-data">${dataFmt}</div>
-      </div>
-      <div class="top-valor">− ${fmt(s.valor)}</div>
-    </div>`;
-  }).join('');
+  const saidas = lancamentosAno.filter(l => l.tipo === 'Saída');
+  gerarListaTop(saidas, 'topSaidas', 'Saída');
 }
 
-// ── ESTATÍSTICAS ─────────────────────────────────────────────
 function renderEstatisticas() {
   const entradas = lancamentosAno.filter(l => l.tipo === 'Entrada');
   const saidas   = lancamentosAno.filter(l => l.tipo === 'Saída');
@@ -522,7 +696,6 @@ function renderEstatisticas() {
   `;
 }
 
-// ── TABELA ───────────────────────────────────────────────────
 function renderTabela(filtro) {
   const lista = filtro === 'todos'
     ? lancamentosAno
@@ -540,11 +713,13 @@ function renderTabela(filtro) {
     const dataFmt = d.getDate().toString().padStart(2,'0')+'/'+
                     (d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getFullYear();
     const isEnt = l.tipo === 'Entrada';
+    const descricao = l.descricao || 'Sem descrição';
+    
     return `<tr>
       <td>${dataFmt}</td>
       <td><span class="badge-tipo ${isEnt?'badge-entrada':'badge-saida'}">${isEnt?'💰':'📤'} ${l.tipo}</span></td>
-      <td class="${isEnt?'valor-pos':'valor-neg'}">${isEnt?'+ ':' − '}${fmt(l.valor)}</td>
-      <td style="color:#666;">${l.descricao||'—'}</td>
+      <td class="${isEnt?'valor-pos':'valor-neg'}">${isEnt?'+ ':'- '}${fmt(l.valor)}</td>
+      <td style="color:#666;">${descricao}</td>
     </tr>`;
   }).join('');
 }
@@ -555,7 +730,6 @@ window.filtrarTabela = function(filtro, btn) {
   renderTabela(filtro);
 };
 
-// ── HELPERS ──────────────────────────────────────────────────
 function fmt(v) {
   return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits:2, maximumFractionDigits:2 });
 }
