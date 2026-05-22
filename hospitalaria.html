@@ -24,6 +24,7 @@ header{background:linear-gradient(135deg,#0f2a5a 0%,#1a3a7a 100%);color:white;pa
 .btn-sair:hover{background:rgba(255,0,0,.2);border-color:#ff6b6b;}
 .btn-verde{background:#2e7d32;border:1px solid #1e5a22;color:white;padding:7px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:.3s;}
 .btn-verde:hover{background:#1e5a22;}
+.btn-verde:disabled{background:#777;border-color:#555;cursor:not-allowed;}
 
 /* YEAR TABS */
 .year-bar{background:white;border-bottom:2px solid #e8e8e8;padding:0 25px;display:flex;align-items:center;gap:0;overflow-x:auto;}
@@ -116,6 +117,7 @@ tr:last-child td{border-bottom:none;}
 .filtro-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
 .filtro-btn{padding:6px 14px;border-radius:20px;border:1px solid #ddd;background:white;font-size:12px;font-weight:600;cursor:pointer;transition:.2s;font-family:inherit;color:#666;}
 .filtro-btn.ativo{background:#1a3a7a;color:white;border-color:#1a3a7a;}
+.filtro-btn:disabled{opacity: 0.7; cursor: not-allowed;}
 
 /* SALDO BARRA */
 .saldo-bar-wrap{margin-top:14px;}
@@ -167,7 +169,7 @@ tr:last-child td{border-bottom:none;}
     <div class="panel-body" style="display: flex; gap: 12px; flex-wrap: wrap;">
       <button class="filtro-btn ativo" id="btnExportarCSV" style="background:#1a3a7a; color:white; border-color:#1a3a7a; padding:10px 18px; border-radius:8px;">📊 Baixar em Excel (CSV)</button>
       <button class="filtro-btn ativo" id="btnExportarPDF" style="background:#d4af37; color:#5c4308; border-color:#d4af37; padding:10px 18px; border-radius:8px;">📄 Salvar como PDF / Imprimir</button>
-      <button class="filtro-btn ativo" id="btnExportarEmail" style="background:#2e7d32; color:white; border-color:#2e7d32; padding:10px 18px; border-radius:8px;">✉️ Compartilhar Resumo por E-mail</button>
+      <button class="filtro-btn ativo" id="btnExportarEmail" style="background:#2e7d32; color:white; border-color:#2e7d32; padding:10px 18px; border-radius:8px;">✉️ Enviar Resumo para o meu E-mail</button>
     </div>
   </div>
 
@@ -383,7 +385,7 @@ onAuthStateChanged(auth, (user) => {
     return;
   }
   
-  emailUsuarioLogado = user.email; // Salva o e-mail para usar depois no relatório
+  emailUsuarioLogado = user.email; 
   document.getElementById('userEmail').textContent = user.email.split('@')[0];
   document.getElementById('btnSair').onclick = () => signOut(auth).then(() => window.location.replace('index.html'));
   
@@ -393,12 +395,10 @@ onAuthStateChanged(auth, (user) => {
 async function inicializar() {
   criarTabs();
   
-  // Ações das ferramentas de relatório
   document.getElementById('btnExportarCSV').onclick = () => executarExportacaoCSV();
   document.getElementById('btnExportarPDF').onclick = () => window.print();
-  document.getElementById('btnExportarEmail').onclick = () => executarExportacaoEmail();
+  document.getElementById('btnExportarEmail').onclick = () => executarExportacaoEmailSilencioso();
 
-  // Ação do botão sincronizar planilha manual
   document.getElementById('btnRefresh').onclick = async () => {
     const btn = document.getElementById('btnRefresh');
     btn.textContent = '⏳ Sincronizando...';
@@ -410,7 +410,7 @@ async function inicializar() {
 
   await carregarDados(true);
 
-  // Auto atualização oculta em segundo plano a cada 45 segundos
+  // Força atualização a cada 45 segundos, ignorando cache do navegador
   setInterval(() => {
     carregarDados(false);
   }, 45000);
@@ -461,11 +461,11 @@ async function carregarDados(primeiraVez = true) {
       document.getElementById('painelRelatorios').style.display = 'none';
     }
 
-    // Criamos um parâmetro de tempo aleatório para forçar o navegador a não usar cache
-    const carimboDeTempo = new Date().getTime();
-    const urlBusca = API_HOSPITALARIA + '?acao=hospitalaria&_t=' + carimboDeTempo;
+    // O "_t" quebra o cache do navegador forçando a baixar sempre a nova versão da planilha
+    const urlBusca = API_HOSPITALARIA + '?acao=hospitalaria&_t=' + new Date().getTime();
     
-    const resp = await fetch(urlBusca);
+    // Adicionado "cache: 'no-store'" para bloqueio de cache duplo (navegador + servidor)
+    const resp = await fetch(urlBusca, { cache: 'no-store' });
     const json = await resp.json();
 
     if (json.erro) throw new Error(json.erro);
@@ -792,7 +792,6 @@ window.filtrarTabela = function(filtro, btn) {
   renderTabela(filtro);
 };
 
-// EXPORTAÇÃO EXCEL (CSV)
 function executarExportacaoCSV() {
   const dataset = anoSelecionado === 'Geral' ? dadosCompletos : lancamentosAno;
   if(!dataset.length) { alert('Não há registros para exportar.'); return; }
@@ -816,27 +815,55 @@ function executarExportacaoCSV() {
   document.body.removeChild(link);
 }
 
-// EXPORTAÇÃO E-MAIL
-function executarExportacaoEmail() {
+// NOVO: Disparo silencioso de E-mail usando o Backend do Google
+async function executarExportacaoEmailSilencioso() {
   const dataset = anoSelecionado === 'Geral' ? dadosCompletos : lancamentosAno;
+  if(!dataset.length) { alert('Não há registros para exportar no período selecionado.'); return; }
+
   const ent = dataset.filter(l => l.tipo === 'Entrada');
   const sai = dataset.filter(l => l.tipo === 'Saída');
   const tEnt = ent.reduce((s,l) => s + l.valor, 0);
   const tSai = sai.reduce((s,l) => s + l.valor, 0);
   const sld = tEnt - tSai;
 
-  const assunto = encodeURIComponent(`Relatório Hospitalaria Monte Sinai 371 - Escopo: ${anoSelecionado}`);
-  const corpo = encodeURIComponent(
-    `Saudações,\n\nSegue o resumo executivo dos dados financeiros extraídos do portal da Hospitalária:\n\n` +
+  const assunto = `Relatório Executivo Hospitalária - Escopo: ${anoSelecionado}`;
+  const corpo = 
+    `Saudações,\n\nSegue o resumo executivo dos dados financeiros extraídos do portal da Hospitalária da Monte Sinai Nº 371:\n\n` +
     `Escopo Analisado: ${anoSelecionado}\n` +
-    `Total de Entradas: ${fmt(tEnt)} (${ent.length} doações)\n` +
-    `Total de Saídas: ${fmt(tSai)} (${sai.length} registros)\n` +
-    `Saldo do Período: ${fmt(sld)}\n\n` +
-    `Para consultar o extrato detalhado de cada transação, por favor acesse o Portal Web da Loja.`
-  );
+    `Total de Entradas: ${fmt(tEnt)} (${ent.length} doações registradas)\n` +
+    `Total de Saídas: ${fmt(tSai)} (${sai.length} pagamentos/saídas)\n` +
+    `Saldo em Caixa (Período): ${fmt(sld)}\n\n` +
+    `Este é um relatório gerado automaticamente pela plataforma. Para ver o extrato completo com descrições e datas, acesse o painel web.\n`;
 
-  // Aqui preenchemos o e-mail do usuário autenticado no campo "Para"
-  window.location.href = `mailto:${emailUsuarioLogado}?subject=${assunto}&body=${corpo}`;
+  const btn = document.getElementById('btnExportarEmail');
+  const textoOriginal = btn.textContent;
+  
+  btn.textContent = '⏳ Enviando pelo Servidor...';
+  btn.disabled = true;
+
+  try {
+    const payload = {
+      acao: 'enviarEmail',
+      email: emailUsuarioLogado,
+      assunto: assunto,
+      corpo: corpo
+    };
+
+    const resp = await fetch(API_HOSPITALARIA, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+
+    const json = await resp.json();
+    if (json.erro) throw new Error(json.erro);
+
+    alert(`✅ Relatório enviado invisivelmente para ${emailUsuarioLogado}! Verifique sua caixa de entrada.`);
+  } catch (e) {
+    alert('❌ Falha ao tentar disparar o e-mail pelo servidor Google. Erro: ' + e.message);
+  } finally {
+    btn.textContent = textoOriginal;
+    btn.disabled = false;
+  }
 }
 
 function fmt(v) {
