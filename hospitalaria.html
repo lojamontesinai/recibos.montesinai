@@ -364,7 +364,20 @@ onAuthStateChanged(auth, (user) => {
 
 async function inicializar() {
   criarTabs();
-  await carregarDados();
+  await carregarDados(true); // O "true" indica que é a primeira vez, mostra o ícone girando
+  
+  // Configura o auto-refresh silencioso a cada 30 segundos (30000 milissegundos)
+  setInterval(() => {
+    carregarDados(false); 
+  }, 30000);
+
+  // Configura a ação do botão manual
+  document.getElementById('btnRefresh').onclick = async () => {
+    const btn = document.getElementById('btnRefresh');
+    btn.textContent = '⏳ ...';
+    await carregarDados(false);
+    btn.textContent = '🔄 Atualizar';
+  };
 }
 
 function criarTabs() {
@@ -401,8 +414,12 @@ function selecionarAno(ano, btn) {
   }
 }
 
-async function carregarDados() {
+async function carregarDados(primeiraVez = true) {
   try {
+    if (primeiraVez) {
+      document.getElementById('loadingState').style.display = 'block';
+    }
+
     const resp = await fetch(API_HOSPITALARIA + '?acao=hospitalaria');
     const json = await resp.json();
 
@@ -418,6 +435,33 @@ async function carregarDados() {
       if (!dadosPorAno[ano]) dadosPorAno[ano] = [];
       dadosPorAno[ano].push(l);
     });
+
+    // Se for a primeira vez, esconde o ícone giratório e mostra o painel
+    if (primeiraVez) {
+      document.getElementById('loadingState').style.display = 'none';
+      if (anoSelecionado === 'Geral') {
+        document.getElementById('conteudoGeral').style.display = 'block';
+      } else {
+        document.getElementById('conteudoAno').style.display = 'block';
+      }
+    }
+
+    // Atualiza a interface silenciosamente
+    if (anoSelecionado === 'Geral') {
+      renderizarGeral();
+    } else {
+      renderizarAno();
+    }
+    
+  } catch(e) {
+    if (primeiraVez) {
+      document.getElementById('loadingState').innerHTML =
+        '<p style="color:#c62828;font-size:14px;">Erro ao carregar dados:<br>' + e.message + '</p>';
+    } else {
+      console.error('Erro na atualização em segundo plano:', e);
+    }
+  }
+}
 
     document.getElementById('loadingState').style.display = 'none';
     document.getElementById('conteudoGeral').style.display = 'block';
