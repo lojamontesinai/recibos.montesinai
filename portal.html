@@ -22,6 +22,7 @@
         <h2>Saudações, Amado Irmão!<br>Escolha o destino:</h2>
         
         <a href="gestao.html" class="btn-menu btn-gestao">📊 Área de Gestão (Master)</a>
+        <a href="hospitalaria.html" id="btnHospitalaria" class="btn-menu" style="background:linear-gradient(135deg,#0f2a5a,#1a3a7a);border:2px solid #d4af37;display:none;">🏥 Hospitalária · Tronco de Solidariedade</a>
         <a href="membro.html" class="btn-menu btn-membro">👤 Meu Status de Membro</a>
         
         <div id="areaAdmin" style="display: none;">
@@ -47,15 +48,27 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
+        // Emails autorizados para área de Gestão Master
+        const EMAILS_GESTAO = ['baronccini89@gmail.com', 'sergioedsonh@yahoo.com.br'];
+        // Emails autorizados para Hospitalária (adicione o email do Hospitaleiro quando tiver)
+        const EMAILS_HOSPITALARIA = [
+            'baronccini89@gmail.com',       // Tesoureiro
+            'sergioedsonh@yahoo.com.br',    // Venerável Mestre
+            // 'hospitaleiro@email.com',    // Hospitaleiro — adicionar quando disponível
+        ];
+
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // Se for você (Lucas), libera o botão de recibos
+                // Libera botão de recibos só para o admin
                 if (user.email === 'baronccini89@gmail.com') {
                     document.getElementById('areaAdmin').style.display = 'block';
                 }
-                
-                // Se não for nem você nem o Sergio, expulsa para a tela de membro (segurança extra)
-                if (user.email !== 'baronccini89@gmail.com' && user.email !== 'sergioedsonh@yahoo.com.br') {
+                // Libera botão de Hospitalária para os cargos autorizados
+                if (EMAILS_HOSPITALARIA.includes(user.email)) {
+                    document.getElementById('btnHospitalaria').style.display = 'flex';
+                }
+                // Bloqueia quem não é Gestão nem Hospitalária
+                if (!EMAILS_GESTAO.includes(user.email) && !EMAILS_HOSPITALARIA.includes(user.email)) {
                     window.location.replace("membro.html");
                 }
             } else {
